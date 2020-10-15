@@ -24,3 +24,36 @@
 1. 主动更新：第一次主动请求，模块获取
 2. 被动更新：收到后台的参数更新推送
 3. 事件通知：缓存信息更新时，发送事件到对应模块，看是否需要对该缓存的变化进行对应处理，如下拉框的值是否需要自动更新，否则需要等下次打开模块时获取最新值。
+
+# API
+## add 
+初始化缓存参数
+```
+* @desc: 添加初始化缓存
+* @param {String} key 区分缓存请求的唯一值
+* @param {Promise} promise的高阶方法 不要在这里处理数据，在callback中处理数据
+* @return {Function} 返回需要缓存的键值对 ,{cache1:[],cache2:{}}
+```
+## load
+开始加载缓存
+```
+* @desc: 加载缓存
+* @param {String} 缓存主键 
+* @param {Dom} container loading container
+* @return {Promise} 如果缓存已存在，直接返回该缓存的promise
+```
+## preload
+提前请求缓存，仅发出请求，不作数据处理，用作静默加载
+```
+* @desc: 缓存预载,不处理数据
+* @param {String} key 缓存关键字 
+* @return {Promise} 
+```
+## update
+更新缓存，这里的更新主要是指全量更新的情况，重发请求
+```
+* @desc 更新缓存
+* @param key 
+```
+## showLoading
+显示加载进度条，可重写

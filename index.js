@@ -2,6 +2,8 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 /*
  * Created with Visual Studio Code.
  * github: https://github.com/tianxiangbing/cache-center
@@ -34,29 +36,31 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
         /**
          * @desc: 添加初始化缓存
          * @param {String} key 区分缓存请求的唯一值
-         * @param {Promise} promise 返回需要缓存的键值对 ,{cache1:[],cache2:{}}
-         * @return {Promise} 返回请求的数据
+         * @param {Promise} promise 不要在这里处理数据，在callback中处理数据
+         * @return {Function} 返回需要缓存的键值对 ,{cache1:[],cache2:{}}
          */
-        add: function add(key, promise) {
+        add: function add(key, promise, callback) {
             //添加一个缓存
             CacheCenter.list[key] = {
                 promiseFunc: promise,
-                status: 'determined'
-                // callback:res=>{
-                //     CacheCenter.list[key].status = 'success';
-                // }
+                status: 'determined',
+                callback: callback
             };
         },
         /**
          * @desc: 缓存预载,不处理数据
-         * @param {type} 
-         * @return {type} 
+         * @param {String} key 缓存关键字 
+         * @return {promise} 
          */
-        preload: function preload(key, promiseFuc) {
-            CacheCenter.list[key] = {
-                promise: promiseFuc(),
-                status: 'pending'
-            };
+        preload: function preload(key) {
+            var cache = CacheCenter.list[key];
+            if (cache.status == 'determined') {
+                cache.status = 'pending';
+                cache.promise = CacheCenter.list[key].promiseFunc();
+                return cache.promise.then(function (res) {
+                    cache.status = 'success';
+                });
+            }
         },
         /**
          * @desc: 加载缓存
@@ -69,17 +73,17 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
             if (CacheCenter.list.hasOwnProperty(key)) {
                 var load = null;
-                if (CacheCenter.list[key].status != 'success') {
+                var cache = CacheCenter.list[key];
+                if (cache.status === 'determined') {
+                    cache.promise = CacheCenter.list[key].promiseFunc();
+                    cache.status = 'pending';
+                }
+                if (cache.status != 'success') {
                     load = CacheCenter.showLoading(container);
                 }
-                if (CacheCenter.list[key].status === 'determined') {
-                    CacheCenter.list[key].promise = CacheCenter.list[key].promiseFunc();
-                    CacheCenter.list[key].status = 'pending';
-                }
-                return CacheCenter.list[key].promise.then(function (res) {
-                    load && load.hideLoading();
-                    CacheCenter.list[key].status = 'success';
-                    CacheCenter.saveCache(res);
+                return CacheCenter.request(key).then(function (res) {
+                    //关闭loading
+                    load && load.hideLoading(container);
                     return res;
                 });
             } else {
@@ -87,11 +91,42 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
                 return Promise.reject('没有这个缓存:' + key);
             }
         },
-        saveCache: function saveCache(res) {
-            _extends(CacheCenter.caches, res);
+        request: function request(key) {
+            var cache = CacheCenter.list[key];
+            return cache.promise.then(function (res) {
+                cache.status = 'success';
+                //判断是否有callback处理数据
+                if (cache.callback) {
+                    var result = cache.callback(res);
+                    CacheCenter.saveCache(key, result);
+                } else {
+                    CacheCenter.saveCache(key, res);
+                }
+                return res;
+            }).catch(function (res) {
+                console.error(res);
+                cache.status = 'determined'; //重置状态
+            });
         },
 
-        get: function get(cacheName) {},
+        /**
+         * @desc 更新缓存
+         * @param {*} key 
+         */
+        update: function update(key) {
+            var cache = CacheCenter.list[key];
+            cache.status = 'determined';
+            cache.promise = CacheCenter.list[key].promiseFunc();
+            cache.status = 'pending';
+            this.request(key);
+        },
+        saveCache: function saveCache(key, res) {
+            _extends(CacheCenter.caches, _defineProperty({}, key, res));
+        },
+        get: function get(key, cacheName) {
+            return CacheCenter.caches[key][cacheName];
+        },
+
         /**
          * @desc: 显示加载效果
          * @param {type} 

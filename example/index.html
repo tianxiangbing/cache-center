@@ -16,20 +16,51 @@
     <script src="jquery-1.8.1.js"></script>
     <script src="../index.js"></script>
     <button id="btnload">加载</button>
+    <button id="btnupdate">更新</button>
+    <button id="btnpreload">预载</button>
     <script>
         var p = ()=>new Promise(function(resolve){
-            return $.post('http://192.168.80.37:8080/demo/tradeQuery1.action?queryId=tellerQuery.getOperTimesSumList',{},
+            return $.post('http://192.168.80.37:8080/demo/hello.action',
             function(res){
                 console.log(111)
                 resolve(res)
             },'json');
         });
-        CacheCenter.add('aaa',p);
+        CacheCenter.add('aaa',p,function(res){
+            //对缓存的处理，这里可以存Storage
+            localStorage.setItem('aaa',res.content);
+            //返回处理后的值,如果没有的时候，缓存请求回来的数据
+            return res.content;
+        });
+        var p1 = ()=>new Promise(function(resolve){
+            return $.post('http://192.168.80.37:8080/demo/preload',
+            function(res){
+                console.log(222)
+                resolve(res)
+            },'json');
+        });
+        CacheCenter.add('bbb',p1,function(res){
+            //对缓存的处理，这里可以存Storage
+            localStorage.setItem('bbb',res);
+            //返回处理后的值,如果没有的时候，缓存请求回来的数据
+            return res;
+        });
         $('#btnload').click(function(){
             CacheCenter.load('aaa').then(res=>{
                 console.log(res)
             });
         });
+        $('#btnupdate').click(function(){
+            CacheCenter.update('aaa')
+        });
+        $('#btnpreload').click(function(){
+            CacheCenter.preload('bbb')
+            setTimeout(function(){
+                CacheCenter.load('bbb').then(res=>{
+                    console.log(res)
+                });
+            },5000)
+        })
     </script>
 </body>
 </html>
