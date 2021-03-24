@@ -2,7 +2,7 @@
  * @Descripttion: 
  * @Author: tianxiangbing
  * @Date: 2020-10-13 09:14:23
- * @LastEditTime: 2020-10-14 17:01:50
+ * @LastEditTime: 2021-01-06 17:29:36
  * @github: https://github.com/tianxiangbing
 -->
 <!DOCTYPE html>
@@ -28,11 +28,12 @@
         });
         CacheCenter.add('aaa',p,function(res){
             //对缓存的处理，这里可以存Storage
+            console.log(22222)
             localStorage.setItem('aaa',res.content);
             //返回处理后的值,如果没有的时候，缓存请求回来的数据
             return res.content;
         });
-        var p1 = ()=>new Promise(function(resolve){
+        var p1 = ()=>new Promise(function(resolve,reject){
             return $.post('http://192.168.80.37:8080/demo/preload',
             function(res){
                 console.log(222)
@@ -46,9 +47,12 @@
             return res;
         });
         $('#btnload').click(function(){
-            CacheCenter.load('aaa').then(res=>{
+            let a = CacheCenter.load('aaa').then(res=>{
                 console.log(res)
             });
+            Promise.all([a]).then(res=>{
+                console.log(333)
+            })
         });
         $('#btnupdate').click(function(){
             CacheCenter.update('aaa')

@@ -27,6 +27,9 @@
          */
         list: {},
         caches: {},
+        init(arr){
+            
+        },
         /**
          * @desc: 添加初始化缓存
          * @param {String} key 区分缓存请求的唯一值
@@ -109,7 +112,7 @@
             cache.status = 'determined';
             cache.promise = CacheCenter.list[key].promiseFunc();
             cache.status='pending';
-            this.request(key);
+            return this.request(key);
         },
         saveCache(key,res){
             Object.assign(CacheCenter.caches,{[key]:res}); 

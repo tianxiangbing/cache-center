@@ -33,6 +33,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
          */
         list: {},
         caches: {},
+        init: function init(arr) {},
+
         /**
          * @desc: 添加初始化缓存
          * @param {String} key 区分缓存请求的唯一值
@@ -118,7 +120,7 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
             cache.status = 'determined';
             cache.promise = CacheCenter.list[key].promiseFunc();
             cache.status = 'pending';
-            this.request(key);
+            return this.request(key);
         },
         saveCache: function saveCache(key, res) {
             _extends(CacheCenter.caches, _defineProperty({}, key, res));
